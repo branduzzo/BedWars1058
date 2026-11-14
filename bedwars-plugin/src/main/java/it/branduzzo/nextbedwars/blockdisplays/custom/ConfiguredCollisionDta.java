@@ -1,0 +1,102 @@
+package it.branduzzo.nextbedwars.blockdisplays.custom;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import it.branduzzo.nextbedwars.blockdisplays.BlockDisplayCreator;
+import it.branduzzo.nextbedwars.blockdisplays.common.DeepCloneable;
+import it.branduzzo.nextbedwars.blockdisplays.entity.Summoner;
+import it.branduzzo.nextbedwars.blockdisplays.version.VersionCompat;
+import it.branduzzo.nextbedwars.blockdisplays.version.VersionManager;
+import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Interaction;
+import org.bukkit.entity.Shulker;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@EqualsAndHashCode
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ConfiguredCollisionDta implements ConfiguredCollision {
+    @NotNull
+    Summoner<Shulker> summoner;
+    @NotNull
+    final String identifier;
+    @Nullable
+    Vector offset;
+    double size;
+    boolean disableBelow1_20_5;
+
+
+    public ConfiguredCollisionDta(Summoner<Shulker> summoner, String identifier, Vector offset, double size) {
+        this(summoner, identifier, offset, size, false);
+    }
+
+    public ConfiguredCollisionDta(Summoner<Shulker> summoner, String identifier, Vector offset) {
+        this(summoner, identifier, offset, 1, false);
+    }
+
+    public ConfiguredCollisionDta(Summoner<Shulker> summoner, String identifier) {
+        this(summoner, identifier, null, 1, false);
+    }
+
+    @Override
+    public Shulker summon(@NotNull Location location) {
+        VersionManager versionManager = BlockDisplayCreator.getInstance().getVersionManager();
+        if (this.disableBelow1_20_5 && versionManager.isVersionBelow1_20_5()) {
+            return null;
+        }
+
+        Location summonLocation = location.clone();
+
+        if (this.offset != null) {
+            summonLocation.add(this.offset);
+        }
+
+        Shulker shulker = this.summoner.summon(summonLocation);
+
+        Interaction vehicle = location.getWorld().spawn(summonLocation, Interaction.class);
+        vehicle.setInteractionHeight(0);
+        vehicle.setInteractionWidth(0);
+
+        shulker.setRemoveWhenFarAway(false);
+        shulker.setAI(false);
+        shulker.setSilent(true);
+        shulker.setGravity(false);
+        shulker.setInvulnerable(true);
+        shulker.setPersistent(true);
+
+        setScale(shulker, this.size);
+
+        vehicle.addPassenger(shulker);
+
+        return shulker;
+    }
+
+    private static void setScale(Shulker shulker, double size) {
+        if (size <= 0 || size == 1) {
+            return;
+        }
+
+        Attribute scaleAttribute = VersionCompat.getScaleAttribute();
+
+        if (scaleAttribute == null)
+            return;
+
+        shulker.getAttribute(scaleAttribute).setBaseValue(size);
+    }
+
+    @Override
+    public ConfiguredCollisionDta clone() {
+        Summoner<Shulker> clonedSummoner = DeepCloneable.tryClone(this.summoner);
+        Vector clonedOffset = null;
+
+        if (this.offset != null) {
+            clonedOffset = this.offset.clone();
+        }
+        return new ConfiguredCollisionDta(clonedSummoner, this.identifier, clonedOffset, this.size, this.disableBelow1_20_5);
+    }
+}

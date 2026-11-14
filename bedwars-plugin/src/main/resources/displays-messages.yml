@@ -1,0 +1,171 @@
+#Message displayed when placing a block in a chunk that exceeds the max-entities-per-chunk limit
+max-entities-per-chunk: "&cYou cannot place a custom block in this chunk!"
+
+#Messages displayed when a player performs an action for which he does not have permission specified in the permission section of the block file
+permission-denied:
+  place: "&cYou do not have permission to place this block."
+  break: "&cYou do not have permission to break this block."
+  interact: "&cYou do not have permission to interact with this block."
+
+#Messages displayed when a player performs an action in a WorldGuard region and that action is denied (due to lack of access)
+region-denied:
+  place: "&c&lHey! &r&7Sorry, but you can`t place that custom block here."
+  break: "&c&lHey! &r&7Sorry, but you can`t break that custom block here."
+  interact: "&c&lHey! &r&7Sorry, but you can`t interact with that custom block here."
+
+#Messages displayed when a player performs an action on a Skyblock island and that action is denied (due to lack of access)
+island-denied:
+  place: "&c&lError | &7This island is protected. You cannot place custom blocks here."
+  break: "&c&lError | &7This island is protected. You cannot break custom blocks here."
+  interact: "&c&lError | &7This island is protected. You cannot interact with custom blocks here."
+
+
+custom-block:
+  place:
+    fail-reason:
+
+      solid-block: "Material at location %x% %y% %z% in world %world% is solid and break_solid_material option is not set."
+      chunk-not-loaded: "Location %x% %y% %z% in world %world% is not loaded and load_chunk option is not set."
+      custom-block-present: "A custom block is already present at location %x% %y% %z% in world %world% and replace_custom_block option is not set."
+
+  break:
+    fail-reason:
+      no-custom-block: "There is no custom block to break at location %x% %y% %z% in world %world%."
+
+  # Message displayed when a player tries to use a custom block that does not exist (for example, if the block was deleted or was not loaded correctly)
+  not-found: "&cCustom block %customblock_name% not found! Perhaps it was deleted or was not loaded correctly."
+
+
+command:
+  # Message displayed when a sender tries to execute a command that requires a custom block name, but does not provide one
+  block-not-exists: "&cBlock &4%customblock_name% &cdoes not exist!"
+
+  # Message displayed after executing the /bdc reload command
+  reload: "&aConfig has been reloaded!"
+  # Message displayed after executing the /bdc reload <block_name> command
+  reload-block: "&aBlock %customblock_name% has been reloaded!"
+
+  custom-block:
+
+    give:
+      # Message displayed when player receives a custom block
+      player-receive: "&aYou have received the &b%customblock_name%&ox&b%amount%&a block"
+      # Message displayed when console or a command block gives a custom block to a certain player
+      give-player: "&aBlock &b%customblock_name%&ox&b%amount%&a was successfully given to the player &b%player%&a!"
+      # Message displayed when console or a command block gives a custom block to several players at once
+      give-players: "&aBlock &b%customblock_name%&ox&b%amount%&a was successfully given!"
+
+      # Message displayed when no block receiver is specified
+      no-player: "&cYou have not specified the block receiver!"
+
+    place:
+      # Message displayed when a block is successfully placed
+      placed: "&aSuccessfully placed the block &b%customblock_name%&r&a at location &b%x% %y% %z% &ain the world &b%world%&a!"
+
+      # Message displayed when no target location is specified
+      invalid-attached-face: "&cInvalid attached face: %face%. Valid values are: &bnorth, south, east, west, up, down"
+
+      # Message displayed when block placement fails for any reason
+      failed: "&cFailed to place the block %customblock_name%: %reason%"
+      # Message displayed when block placement fails for an unknown reason (no specific reason provided)
+      failed-without-reason: "&cFailed to place the block &b%customblock_name%&r&c at &b%x% %y% %z% &cin the world &b%world%&c!"
+
+      # Descriptions of the options that can be used when placing a block. Displayed in the argument tooltip.
+      option-description:
+        replace-custom-block: "&eReplaces an existing custom block at the target location"
+        load-chunk: "&eLoads the chunk before placing the block, if needed"
+        break-solid-material: "&eDestroys a solid vanilla block at the target location, if present"
+        silent-place: "&eSuppresses block placement sounds"
+
+    break:
+      # Message displayed when a block is successfully broken
+      broken: "&aSuccessfully broke the block &b%customblock_name%&r&a at location &b%x% %y% %z% &ain the world &b%world%"
+
+      # Message displayed when no custom block is found at the specified location
+      no-custom-block: "&cNo custom block found at &4%x% %y% %z% &cin the world &4%world%&c!"
+
+      # Descriptions of the options that can be used when breaking a block. Displayed in the argument tooltip.
+      option-description:
+        drop-item: "&eDrops the corresponding item when breaking the block"
+        silent-break: "&eSuppresses block breaking sounds"
+
+    editfile:
+      # Message displayed when a certain block parameter has been set to a certain value.
+      set: "&aBlock &b%customblock_name%&a parameter &b%parameter%&a was successfully set to \"&b%value%&a\"."
+
+  # Generic command messages
+  generic:
+    # Shown when sender lacks required permission
+    no-permission: "&cYou do not have permission to use this command"
+    # Shown when no arguments are provided
+    no-args: "&cYou did not enter any arguments"
+    # Shown when command requires a player
+    only-players: "&cOnly players can use this command"
+    # Shown when console tries to use player-only command
+    only-players-target: "&cThe sender of the command must be a player!"
+    # Shown when no online players found
+    server-empty: "&cThe server is empty!"
+    # Shown when selector or player name is invalid
+    invalid-selector: "&cYou specified a non-existent selector or player name"
+    # Shown when number is out of range
+    invalid-number: "&cAmount must be a number and must be in the range 1-127"
+    # Shown when coordinates format is invalid
+    invalid-coordinates: "&cYou must specify coordinates in the format <x1> <y1> <z1> <x2> <y2> <z2>"
+    # Shown when number format is invalid
+    invalid-number-format: "&cIt looks like you entered the wrong number"
+    # Shown when block name is missing
+    not-specify-block: "&cYou didn't specify a block!"
+    # Shown when parameter is missing
+    not-specify-parameter: "&cYou didn't specify a parameter!"
+
+  # Messages for /bdc create | /bdc spawn | /bde create (BDEngine model import)
+  create:
+    # Usage for create/spawn
+    usage: "&cUsage: /bdc create <id> | /bdc spawn <id>"
+    # Shown while fetching model from block-display.com
+    fetching: "&eFetching model &6%id%&e..."
+    # Shown when model file created, placeholders: %id% model id, %block% block name, %file% file name
+    created: "&aModel &6%id%&a created as block &6%block%&a! File: &7%file%"
+    # Shown when block item is given to player
+    received: "&aYou received block &6%block% &7(&fA Block Display &7- STONE)"
+    # Shown when model id not found or expired (5 min validity)
+    not-found: "&cModel not found or expired (id=%id%): %error%"
+    # Shown on fetch failure
+    failed: "&cFailed to fetch model: %error%"
+    # Generic error
+    error: "&cError: %error%"
+
+  # Messages for animation commands (/bdc animate, bde:animate)
+  animate:
+    # Shown when animation not found for block, placeholders: %animation% %block%
+    not-found: "&cAnimation not found: %animation% for block %block%"
+    # Shown when animation starts, %loop% is " (loop)" if looping
+    playing: "&aPlaying animation &6%animation%&a for &6%block%%loop%"
+    # Suffix appended when looping
+    loop-suffix: " (loop)"
+    # Shown when animation stopped
+    stopped: "&aStopped &6%animation%&a for &6%block%"
+    # Usage for animate
+    usage: "&cUsage: /bdc animate <block> [animation] [loop]"
+    # Usage for stop
+    usage-stop: "&cUsage: /bdc stop <block> [animation]"
+
+  # Messages for sound commands (/bdc sound, bde:sound)
+  sound:
+    # Shown when sound animation not found
+    not-found: "&cSound not found: %animation% for block %block%"
+    # Shown when sound starts
+    playing: "&aPlaying sound &6%animation%&a for &6%block%%loop%"
+    # Usage for sound
+    usage: "&cUsage: /bdc sound <block> [animation] [loop]"
+
+  # Messages for reload
+  reload:
+    # Shown after /bdc reload
+    success: "&aConfig has been reloaded!"
+    # Shown after /bdc reload <block>, placeholder %block%
+    block-success: "&a%block% block has been reloaded!"
+
+
+
+

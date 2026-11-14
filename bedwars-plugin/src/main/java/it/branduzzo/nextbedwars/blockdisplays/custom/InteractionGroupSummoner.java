@@ -1,0 +1,52 @@
+package it.branduzzo.nextbedwars.blockdisplays.custom;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+import it.branduzzo.nextbedwars.blockdisplays.common.DeepCloneable;
+import it.branduzzo.nextbedwars.blockdisplays.entity.CompositeSummoner;
+import it.branduzzo.nextbedwars.blockdisplays.entity.Summoner;
+import it.branduzzo.nextbedwars.blockdisplays.util.OperationUtil;
+import org.bukkit.Location;
+import org.bukkit.entity.Interaction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+
+@Getter
+@Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class InteractionGroupSummoner implements CompositeSummoner<Interaction>, DeepCloneable<InteractionGroupSummoner> {
+    List<Summoner<Interaction>> summoners;
+
+    public InteractionGroupSummoner(List<Summoner<Interaction>> summoners) {
+        this.summoners = summoners;
+    }
+
+    @SafeVarargs
+    public InteractionGroupSummoner(Summoner<Interaction>... summoners) {
+        this.summoners = Arrays.stream(summoners).collect(OperationUtil.toArrayList());
+    }
+
+    @Override
+    public List<Interaction> summon(@NotNull Location location, @Nullable Predicate<Interaction> filter) {
+        if (summoners.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return summoners.stream()
+                .map(summoner -> summoner.summon(location))
+                .filter(interaction -> filter == null || filter.test(interaction))
+                .collect(OperationUtil.toArrayList());
+    }
+
+    @Override
+    public InteractionGroupSummoner clone() {
+        return new InteractionGroupSummoner(DeepCloneable.tryCloneList(this.summoners));
+    }
+}

@@ -1,0 +1,120 @@
+package it.branduzzo.nextbedwars.blockdisplays.version;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.FieldDefaults;
+import org.bukkit.Server;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Utility class for detecting and comparing the current Minecraft server version.
+ * <p>
+ * Extracts the version from the running {@link Server} instance and provides
+ * convenience checks for specific supported versions.
+ * </p>
+ */
+@Getter
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class VersionManager {
+    /**
+     * Reference to the running server.
+     */
+    Server server;
+    /**
+     * Parsed Minecraft version of the server.
+     */
+    MinecraftVersion currentVersion;
+
+    /**
+     * Creates a new version manager for the given server.
+     *
+     * @param server the running server instance
+     * @throws IllegalArgumentException if the server version cannot be resolved
+     */
+    public VersionManager(Server server) {
+        this.server = server;
+        this.currentVersion = resolveVersion(server);
+    }
+
+    /**
+     * Resolves the current Minecraft version from the server.
+     *
+     * @param server the server instance
+     * @return the parsed {@link MinecraftVersion}
+     * @throws IllegalArgumentException if the version string is not supported
+     */
+    private MinecraftVersion resolveVersion(Server server) throws IllegalArgumentException {
+        String versionString = extractVersion(server.getBukkitVersion());
+        MinecraftVersion minecraftVersion = MinecraftVersion.fromString(versionString);
+
+        if (minecraftVersion == null) {
+            throw new IllegalArgumentException("Unsupported Minecraft version: " + versionString);
+        }
+
+        return minecraftVersion;
+    }
+
+    /**
+     * Extracts the raw Minecraft version string from a Bukkit version string.
+     *
+     * @param bukkitVersion the Bukkit version string
+     * @return the extracted Minecraft version
+     */
+    private String extractVersion(String bukkitVersion) {
+        Matcher matcher = Pattern.compile("^\\d+(?:\\.\\d+)+").matcher(bukkitVersion);
+
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Cannot extract version from: " + bukkitVersion);
+        }
+
+        return matcher.group();
+    }
+
+
+    /**
+     * Checks if the server is running a version later than 1.21.8.
+     *
+     * @return {@code true} if the current version is 1.21.9 or later
+     */
+    public boolean isVersionLater1_21_8() {
+        return this.currentVersion.isAtLeast(MinecraftVersion.V1_21_9);
+    }
+
+    /**
+     * Checks if the server is running a version earlier than 1.20.5.
+     *
+     * @return {@code true} if current version is below 1.20.5
+     */
+    public boolean isVersionBelow1_20_5() {
+        return this.currentVersion.isBelow(MinecraftVersion.V1_20_5);
+    }
+
+    /**
+     * Checks if the server is running a version earlier than 1.21.3.
+     *
+     * @return {@code true} if current version is below 1.21.3
+     */
+    public boolean isVersionBelow1_21_3() {
+        return this.currentVersion.isBelow(MinecraftVersion.V1_21_3);
+    }
+
+    /**
+     * Checks if the server is running a version earlier than 1.21.5.
+     *
+     * @return {@code true} if current version is below 1.21.5
+     */
+    public boolean isVersionBelow1_21_5() {
+        return this.currentVersion.isBelow(MinecraftVersion.V1_21_5);
+    }
+
+    /**
+     * Checks if the server is running exactly Minecraft 1.19.4.
+     *
+     * @return {@code true} if current version is 1.19.4
+     */
+    public boolean isVersion1_19_4() {
+        return this.currentVersion.equals(MinecraftVersion.V1_19_4);
+    }
+}

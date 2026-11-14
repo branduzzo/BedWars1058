@@ -1,0 +1,221 @@
+package it.branduzzo.nextbedwars.blockdisplays.listener.player;
+
+import com.google.common.base.Preconditions;
+import it.branduzzo.nextbedwars.blockdisplays.BlockDisplayCreator;
+import it.branduzzo.nextbedwars.blockdisplays.common.BDCDependentPluginsManager;
+import it.branduzzo.nextbedwars.blockdisplays.custom.ConfiguredInteraction;
+import it.branduzzo.nextbedwars.blockdisplays.custom.block.CustomBlock;
+import it.branduzzo.nextbedwars.blockdisplays.custom.block.CustomBlockKey;
+import it.branduzzo.nextbedwars.blockdisplays.custom.block.CustomBlockPermissions;
+import it.branduzzo.nextbedwars.blockdisplays.custom.block.CustomBlockService;
+import it.branduzzo.nextbedwars.blockdisplays.event.custom.block.CustomBlockInteractEvent;
+import it.branduzzo.nextbedwars.blockdisplays.file.config.value.BooleanConfigValue;
+import it.branduzzo.nextbedwars.blockdisplays.file.config.value.StringMessagesValue;
+import it.branduzzo.nextbedwars.blockdisplays.permission.DefaultPermissions;
+import it.branduzzo.nextbedwars.blockdisplays.placeholder.universal.CustomBlockPlaceholder;
+import it.branduzzo.nextbedwars.blockdisplays.placeholder.universal.InteractionPlaceholder;
+import it.branduzzo.nextbedwars.blockdisplays.service.ServiceManager;
+import it.branduzzo.nextbedwars.blockdisplays.util.ChatUtil;
+import it.branduzzo.nextbedwars.blockdisplays.util.EventUtil;
+import it.branduzzo.nextbedwars.blockdisplays.world.guard.WGRegionAccessChecker;
+import it.branduzzo.nextbedwars.blockdisplays.world.guard.WGRegionFlags;
+import it.branduzzo.nextbedwars.blockdisplays.world.skyblock.superior.SSBIslandAccessChecker;
+import it.branduzzo.nextbedwars.blockdisplays.world.skyblock.superior.SSBIslandPrivileges;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Interaction;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
+
+import java.util.Collection;
+import java.util.function.Predicate;
+
+public class PlayerInteractEntityListener implements Listener {
+
+    private final ServiceManager<String, CustomBlockService> serviceManager;
+
+    public PlayerInteractEntityListener(ServiceManager<String, CustomBlockService> serviceManager) {
+        this.serviceManager = serviceManager;
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onPlayerInteractAtEntity(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        EquipmentSlot hand = event.getHand();
+
+        if (!(event.getRightClicked() instanceof Interaction interaction))
+            return;
+
+        String blockName = CustomBlockKey.holder(interaction).getName();
+
+        if (blockName == null)
+            return;
+
+        if (!BooleanConfigValue.BLOCKS_INTERACTION) {
+            if (!player.hasPermission(DefaultPermissions.BDC.CustomBlock.BLOCKS_INTERACTION)) {
+                ChatUtil.sendMessage(player, StringMessagesValue.PERMISSION_DENIED_INTERACT);
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        CustomBlockService customBlockService = CustomBlockService.getService(serviceManager, interaction);
+
+        CustomBlock customBlock = customBlockService.getCustomBlock(interaction);
+
+        if (customBlock == null) {
+            ChatUtil.sendMessage(player, StringMessagesValue.CUSTOM_BLOCK_NOT_FOUND.replace("%customblock_name%", blockName));
+            return;
+        }
+
+        if (!checkAccess(customBlock, player)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        ConfiguredInteraction configuredInteraction = customBlock.getConfiguredInteraction(interaction);
+
+        if (configuredInteraction == null) {
+            return;
+        }
+
+        CustomBlockInteractEvent customBlockInteractEvent = new CustomBlockInteractEvent(customBlock, player, interaction, configuredInteraction, hand);
+
+        if (!EventUtil.call(customBlockInteractEvent)) {
+            return;
+        }
+
+        event.setCancelled(true);
+
+        customBlock.handleClick(configuredInteraction, interaction, player, new CustomBlockPlaceholder(customBlock), new InteractionPlaceholder(interaction));
+
+
+        /*
+        RayTraceResult rayTraceResult = world.rayTraceEntities(
+                eyeLocation,
+                direction,
+                6,
+                entity -> !entity.getUniqueId().equals(player.getUniqueId())
+        );
+
+        ChatUtil.sendMessage(player, "Is rayTraceResult null? - " + (rayTraceResult == null));
+
+        if (rayTraceResult == null) {
+            return;
+        }
+
+        Vector hitPosition = rayTraceResult.getHitPosition();
+
+        BlockFace blockFace = determineEntityFace(interaction, hitPosition);
+
+        ChatUtil.sendMessage(player, "&1hitPosition is " + hitPosition);
+        ChatUtil.sendMessage(player, "&2blockFace is " + blockFace);
+        ChatUtil.sendMessage(player, "&3hitEntity is " + rayTraceResult.getHitEntity().getType());
+        ChatUtil.sendMessage(player, "&4BoundingBox: " + interaction.getBoundingBox());
+
+
+        PlayerInteractEvent playerInteractEvent = new PlayerInteractEvent(player, Action.RIGHT_CLICK_BLOCK, player.getInventory().getItem(hand), world.getBlockAt(hitPosition.getBlockX(), hitPosition.getBlockY(), hitPosition.getBlockZ()), blockFace, hand);
+        EventUtil.call(playerInteractEvent);*/
+    }
+
+    private static boolean checkAccess(CustomBlock customBlock, Player player) {
+        BDCDependentPluginsManager dependentPluginManager = BlockDisplayCreator.getInstance().getDependentPluginsManager();
+        Location customBlockLocation = customBlock.getLocation();
+
+        if (dependentPluginManager.isWorldGuardAvailable()) {
+            if (!WGRegionAccessChecker.checkRegionAccess(customBlockLocation, WGRegionFlags.INTERACT_CB, player)) {
+                ChatUtil.sendMessage(player, StringMessagesValue.REGION_DENIED_INTERACT);
+                return false;
+            }
+        }
+
+        if (dependentPluginManager.isSuperiorSkyblockAvailable()) {
+            if (!SSBIslandAccessChecker.checkIslandAccess(customBlockLocation, SSBIslandPrivileges.INTERACT_CB, player)) {
+                ChatUtil.sendMessage(player, StringMessagesValue.ISLAND_DENIED_INTERACT);
+                return false;
+            }
+        }
+
+
+        CustomBlockPermissions permissions = customBlock.getPermissions();
+
+        if (permissions != null && !permissions.hasPermissions(player, CustomBlockPermissions.Type.INTERACT)) {
+            ChatUtil.sendMessage(player, StringMessagesValue.PERMISSION_DENIED_INTERACT);
+            return false;
+        }
+
+        return true;
+    }
+
+    public BlockFace determineEntityFace(Interaction entity, Vector hitPos) {
+        BoundingBox box = entity.getBoundingBox();
+
+        double dx = hitPos.getX() - box.getCenterX();
+        double dy = hitPos.getY() - box.getCenterY();
+        double dz = hitPos.getZ() - box.getCenterZ();
+
+        double absDx = Math.abs(dx);
+        double absDy = Math.abs(dy);
+        double absDz = Math.abs(dz);
+
+        if (absDy > absDx && absDy > absDz) {
+            return dy > 0 ? BlockFace.UP : BlockFace.DOWN;
+        } else if (absDx > absDz) {
+            return dx > 0 ? BlockFace.EAST : BlockFace.WEST;
+        } else {
+            return dz > 0 ? BlockFace.SOUTH : BlockFace.NORTH;
+        }
+    }
+
+    private RayTraceResult rayTraceEntities(World world, Location start, Vector direction, double maxDistance, double raySize, Predicate<Entity> filter) {
+        Preconditions.checkArgument(start != null, "Location start cannot be null");
+        Preconditions.checkArgument(world.equals(start.getWorld()), "Location start cannot be in a different world");
+        start.checkFinite();
+
+        Preconditions.checkArgument(direction != null, "Vector direction cannot be null");
+        direction.checkFinite();
+
+        Preconditions.checkArgument(direction.lengthSquared() > 0, "Direction's magnitude (%s) need to be greater than 0", direction.lengthSquared());
+
+        if (maxDistance < 0.0D) {
+            return null;
+        }
+
+        Vector startPos = start.toVector();
+        Vector dir = direction.clone().normalize().multiply(maxDistance);
+        BoundingBox aabb = BoundingBox.of(startPos, startPos).expandDirectional(dir).expand(raySize);
+        Collection<Entity> entities = world.getNearbyEntities(aabb, filter);
+
+        Entity nearestHitEntity = null;
+        RayTraceResult nearestHitResult = null;
+        double nearestDistanceSq = Double.MAX_VALUE;
+
+        ChatUtil.log("1");
+        for (Entity entity : entities) {
+            BoundingBox boundingBox = entity.getBoundingBox().expand(raySize);
+            RayTraceResult hitResult = boundingBox.rayTrace(startPos, direction, maxDistance);
+            ChatUtil.log("2");
+            if (hitResult != null) {
+                double distanceSq = startPos.distanceSquared(hitResult.getHitPosition());
+                ChatUtil.log("3");
+                if (distanceSq < nearestDistanceSq) {
+                    ChatUtil.log("4");
+                    nearestHitEntity = entity;
+                    nearestHitResult = hitResult;
+                    nearestDistanceSq = distanceSq;
+                }
+            }
+        }
+
+        return (nearestHitEntity == null) ? null : new RayTraceResult(nearestHitResult.getHitPosition(), nearestHitEntity, nearestHitResult.getHitBlockFace());
+    }
+}

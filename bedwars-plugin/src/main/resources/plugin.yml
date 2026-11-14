@@ -1,8 +1,64 @@
-name: BedWars1058
-api-version: '1.13'
+name: NextBedWars
+api-version: '1.21'
 version: ${project.version}
-author: andrei1058
-description: BedWars minigame by andrei1058
-main: com.andrei1058.bedwars.BedWars
-softdepend: [Vault,PlaceholderAPI,Citizens,Parties,SlimeWorldManager,VipFeatures,Enhanced-SlimeWorldManager,PartyAndFriends,Spigot-Party-API-PAF]
-#load: STARTUP
+authors: [Branduzzo]
+description: Christmas BedWars minigame
+main: it.branduzzo.nextbedwars.BedWars
+folia-supported: true
+softdepend: [Vault, PlaceholderAPI, Citizens, Parties, PartyAndFriends, Spigot-Party-API-PAF, WorldGuard, PacketEvents, SuperiorSkyblock2]
+
+commands:
+  blockdisplaycreator:
+    description: NextBedWars custom blocks
+    usage: /bdc <custom-block|reload|erase|create|spawn>
+    aliases: [bdc, bde]
+  cb:
+    description: Get a custom block
+    usage: /cb <custom-block> [amount] [receiver]
+
+permissions:
+  blockdisplaycreator.blocks-destruction:
+    default: op
+  blockdisplaycreator.blocks-placement:
+    default: op
+  blockdisplaycreator.blocks-interaction:
+    default: op
+  bdc.bypass.*:
+    default: op
+    children:
+      bdc.bypass.wg: true
+      bdc.bypass.skyblock: true
+  bdc.bypass.wg:
+    default: op
+  bdc.bypass.skyblock:
+    default: op
+  bdc.quickselect.creative:
+    default: op
+  bdc.command.*:
+    default: op
+    children:
+      bdc.command.custom-block: true
+      bdc.command.reload: true
+      bdc.command.erasecbdata: true
+      bdc.command.create: true
+  bdc.command.custom-block.*:
+    default: op
+    children:
+      bdc.command.custom-block.give: true
+      bdc.command.custom-block.place: true
+      bdc.command.custom-block.break: true
+      bdc.command.custom-block.editfile: true
+  bdc.command.custom-block.give:
+    default: op
+  bdc.command.custom-block.place:
+    default: op
+  bdc.command.custom-block.break:
+    default: op
+  bdc.command.custom-block.editfile:
+    default: op
+  bdc.command.reload:
+    default: op
+  bdc.command.erasecbdata:
+    default: op
+  bdc.command.create:
+    default: op
